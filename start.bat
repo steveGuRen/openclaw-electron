@@ -29,11 +29,11 @@ if "%choice%"=="1" (
     
     if /i "%version%"=="A" (
         echo.
-        echo 📝 运行 PowerShell 安装脚本...
+        echo [*] 运行 PowerShell 安装脚本...
         powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\install-openclaw-service.ps1"
     ) else (
         echo.
-        echo 📝 运行批处理安装脚本...
+        echo [*] 运行批处理安装脚本...
         call "%~dp0scripts\install-openclaw-service.bat"
     )
     goto :EOF
@@ -44,9 +44,9 @@ if "%choice%"=="2" (
     echo 启动 OpenClaw 服务...
     net start OpenClawGateway
     if %ERRORLEVEL% EQU 0 (
-        echo ✅ OpenClaw 服务已启动
+        echo [OK] OpenClaw 服务已启动
     ) else (
-        echo ⚠️  服务启动失败，请确保已运行安装脚本
+        echo [!] 服务启动失败，请确保已运行安装脚本
     )
     pause
     goto :EOF
@@ -64,7 +64,7 @@ if "%choice%"=="4" (
     echo 启动 OpenClaw 服务...
     net start OpenClawGateway
     if %ERRORLEVEL% NEQ 0 (
-        echo ⚠️  服务启动失败，请先运行安装脚本
+        echo [!] 服务启动失败，请先运行安装脚本
         pause
         goto :EOF
     )
@@ -77,6 +77,6 @@ if "%choice%"=="4" (
     goto :EOF
 )
 
-echo ❌ 无效选择
+echo [X] 无效选择
 pause
 
