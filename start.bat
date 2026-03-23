@@ -1,5 +1,6 @@
 @echo off
-REM OpenClaw + Electron 快速启动脚本
+chcp 65001 >nul
+REM OpenClaw + Electron 启动脚本
 
 setlocal enabledelayedexpansion
 
