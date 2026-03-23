@@ -59,7 +59,9 @@ if (-not $SkipNVM) {
             $nvmPath = "$env:TEMP\nvm-setup.exe"
             
             Write-Host "[*] Downloading NVM from GitHub..."
-            Invoke-WebRequest -Uri $nvmUrl -OutFile $nvmPath -ProgressAction SilentlyContinue
+            # Use $ProgressPreference for compatibility with Windows PowerShell (5.1)
+            $ProgressPreference = 'SilentlyContinue'
+            Invoke-WebRequest -Uri $nvmUrl -OutFile $nvmPath
             
             Write-Host "[*] Running NVM installer..."
             Start-Process -FilePath $nvmPath -Wait

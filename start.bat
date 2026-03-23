@@ -20,22 +20,9 @@ set /p choice="Please select (1-4): "
 
 if "%choice%"=="1" (
     echo.
-    echo Starting first-time installation...
-    echo Select script version:
-    echo   [A] PowerShell version (recommended, full features)
-    echo   [B] Batch script version (better compatibility)
-    echo.
-    set /p version="Please select (A/B): "
-    
-    if /i "%version%"=="A" (
-        echo.
-        echo [*] Running PowerShell installation script...
-        powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\install-openclaw-service.ps1"
-    ) else (
-        echo.
-        echo [*] Running batch installation script...
-        call "%~dp0scripts\install-openclaw-service.bat"
-    )
+    echo Starting first-time installation ^(one-click^)...
+    echo [*] Running PowerShell one-click installer ^(Node via MSI, clone, onboard^)
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\install-openclaw-oneclick.ps1"
     goto :EOF
 )
 
