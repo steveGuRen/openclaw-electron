@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git check-ignore:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git worktree:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(node:*)",
+      "Bash(npm list:*)",
+      "Bash(tasklist)",
+      "Bash(xargs -r taskkill /F /PID)",
+      "Bash(ls -la F:/ai/openclaw-electron/.worktrees/dclaw-development/*.js)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(timeout 30 tail -f C:\\\\Users\\\\STEVEG~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\F--ai-openclaw-electron\\\\fee4a562-59a0-4c8d-b155-95e7a7563f5f\\\\tasks\\\\bjnpdcpi7.output)",
+      "Bash(timeout 30 tail -f \"/c/Users/STEVEG~1/AppData/Local/Temp/claude/F--ai-openclaw-electron/fee4a562-59a0-4c8d-b155-95e7a7563f5f/tasks/bjnpdcpi7.output\")",
+      "Bash(curl -s http://localhost:5175)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :5173)",
+      "Bash(findstr LISTENING)",
+      "Bash(xargs -I {} taskkill /F /PID {})",
+      "Bash(npx eslint:*)",
+      "Bash(timeout 10 bash -c 'tail -f C:\\\\Users\\\\STEVEG~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\F--ai-openclaw-electron\\\\fee4a562-59a0-4c8d-b155-95e7a7563f5f\\\\tasks\\\\b5d8dagt9.output | grep -E \"\\(Local|http|ready\\)\" | head -10')",
+      "Bash(taskkill:*)",
+      "Bash(pkill -f \"electron\")"
+    ]
+  }
+}
