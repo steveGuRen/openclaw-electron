@@ -4,9 +4,12 @@
       <span class="step-name">{{ stepName }}</span>
       <span class="percentage">{{ percentage }}%</span>
     </div>
-    <div class="progress-bar">
-      <div class="progress-fill" :style="{ width: `${percentage}%` }"></div>
-    </div>
+    <el-progress
+      :percentage="percentage"
+      :show-text="false"
+      :stroke-height="12"
+      class="custom-progress"
+    />
     <div class="step-info">
       步骤 {{ currentStep }} / {{ totalSteps }}
     </div>
@@ -56,24 +59,24 @@ const props = defineProps({
   font-weight: 600;
 }
 
-.progress-bar {
+.step-info {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #909399;
+  text-align: right;
+}
+
+/* 自定义进度条样式 */
+:deep(.custom-progress .el-progress__bar) {
   height: 12px;
   background: #ebeef5;
   border-radius: 6px;
   overflow: hidden;
 }
 
-.progress-fill {
-  height: 100%;
+:deep(.custom-progress .el-progress__inner) {
   background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
   border-radius: 6px;
   transition: width 0.3s ease;
-}
-
-.step-info {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #909399;
-  text-align: right;
 }
 </style>

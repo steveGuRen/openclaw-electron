@@ -1,15 +1,15 @@
 <template>
-  <div class="layout">
-    <div class="header">
+  <el-container class="layout">
+    <el-header class="header">
       <h1>Dclaw - openclaw 一键安装工具</h1>
-    </div>
-    <div class="content">
+    </el-header>
+    <el-main class="content">
       <slot />
-    </div>
-    <div class="footer">
+    </el-main>
+    <el-footer class="footer">
       <p>© 2026 Dclaw Team</p>
-    </div>
-  </div>
+    </el-footer>
+  </el-container>
 </template>
 
 <script setup>
@@ -19,8 +19,6 @@
 .layout {
   width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
   background: #f5f7fa;
 }
 
@@ -41,7 +39,6 @@
 }
 
 .content {
-  flex: 1;
   padding: 30px;
   overflow-y: auto;
 }
@@ -55,5 +52,17 @@
   border-top: 1px solid #e4e7ed;
   color: #909399;
   font-size: 12px;
+}
+
+/* 覆盖Element Plus默认样式 */
+:deep(.el-header),
+:deep(.el-main),
+:deep(.el-footer) {
+  padding: 0;
+}
+
+:deep(.el-container) {
+  height: 100%;
+  flex-direction: column;
 }
 </style>

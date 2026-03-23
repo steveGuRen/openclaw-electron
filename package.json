@@ -1,37 +1,32 @@
 {
-  "name": "openclaw-electron",
-  "private": true,
-  "version": "0.0.0",
-  "type": "commonjs",
-  "main": "main.js",
-  "pnpm": {
-    "node-linker": "hoisted"
-  },
+  "name": "dclaw",
+  "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "electron:dev": "electron .",
-    "electron:build": "electron-builder"
-  },
-  "description": "OpenClaw Electron Application",
-  "author": "OpenClaw Team",
-  "build": {
-    "win": {
-      "target": "nsis",
-      "requestedExecutionLevel": "requireAdministrator"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
-    }
+    "electron:dev": "concurrently -k \"vite --port 5173\" \"electron . --dev\"",
+    "electron:build": "vite build && electron-builder",
+    "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
-    "is-elevated": "^4.0.0"
+    "vue": "^3.4.0",
+    "pinia": "^2.1.0",
+    "vue-router": "^4.2.0",
+    "element-plus": "^2.5.0",
+    "electron-store": "^8.1.0",
+    "keytar": "^7.9.0",
+    "fs-extra": "^11.2.0",
+    "axios": "^1.6.0",
+    "playwright": "^1.42.0",
+    "node-os-utils": "^1.3.0"
   },
   "devDependencies": {
-    "electron": "^30.0.0",
-    "electron-builder": "^26.8.1",
-    "vite": "^5.4.8"
-  }
+    "@vitejs/plugin-vue": "^5.0.0",
+    "vite": "^5.0.0",
+    "electron": "^29.0.0",
+    "electron-builder": "^24.12.0",
+    "concurrently": "^8.2.0"
+  },
+  "main": "src/main/index.js"
 }

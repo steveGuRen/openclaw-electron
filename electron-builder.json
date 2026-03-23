@@ -1,0 +1,34 @@
+{
+  "appId": "com.do1.dclaw",
+  "productName": "Dclaw",
+  "directories": {
+    "output": "release"
+  },
+  "win": {
+    "target": ["nsis", "portable"],
+    "icon": "public/icon.ico",
+    "sign": false
+  },
+  "mac": {
+    "target": ["dmg", "zip"],
+    "icon": "public/icon.icns",
+    "hardenedRuntime": true,
+    "sign": false
+  },
+  "linux": {
+    "target": ["AppImage", "deb", "rpm"],
+    "icon": "public/icon.png"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "allowElevation": true
+  },
+  "files": [
+    "dist/**/*",
+    "src/main/**/*",
+    "src/workers/**/*",
+    "src/shared/**/*",
+    "node_modules/**/*"
+  ]
+}
