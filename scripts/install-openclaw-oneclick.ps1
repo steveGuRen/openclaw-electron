@@ -135,11 +135,15 @@ try {
 
 Write-Log "Running 'openclaw onboard --install-daemon' to setup gateway daemon"
 try {
-	# Ensure npm global bin is in PATH for this session
+	# Ensure npm global prefix/bin is in PATH for this session
 	$globalBin = $null
 	try {
-		# Use cmd wrapper which reliably resolves npm.cmd/npm.ps1 on Windows
-		$globalBin = (& cmd /c npm bin -g) -replace "\r", ''
+		# npm v10+ removed 'npm bin -g'; use 'npm config get prefix' to get the global prefix
+		$prefix = (& cmd /c npm config get prefix) -replace "\r", ''
+		if ($prefix -and -not [string]::IsNullOrWhiteSpace($prefix)) {
+			# On Windows, global executables live directly under the prefix (e.g. prefix\openclaw.cmd)
+			$globalBin = $prefix.Trim()
+		}
 	} catch {
 		$globalBin = $null
 	}
@@ -148,10 +152,16 @@ try {
 	if ($globalBin -and (Test-Path $globalBin)) {
 		if ($env:Path -notlike "*${globalBin}*") { $env:Path = "$globalBin;$env:Path"; Write-Log "Added npm global bin $globalBin to PATH" }
 
+		# Print full PATH for debugging
+		Write-Log "DEBUG: PATH: $env:Path"
+
 		# Make 'openclaw' available in this PowerShell session immediately by creating an alias/function
 		$ocCmd = Join-Path $globalBin 'openclaw.cmd'
 		$ocPs1 = Join-Path $globalBin 'openclaw.ps1'
 		$ocExe = Join-Path $globalBin 'openclaw'
+		Write-Log "DEBUG: openclaw.cmd exists: $(Test-Path $ocCmd)"
+		Write-Log "DEBUG: openclaw.ps1 exists: $(Test-Path $ocPs1)"
+		Write-Log "DEBUG: openclaw (no ext) exists: $(Test-Path $ocExe)"
 		if (Test-Path $ocCmd) {
 			try { Set-Alias -Name openclaw -Value $ocCmd -Force; Write-Log "Set alias openclaw -> $ocCmd" } catch {}
 		} elseif (Test-Path $ocPs1) {
@@ -175,29 +185,20 @@ try {
 	Write-Log "DEBUG: selected found value: '$found'"
 	if ($found) {
 		Write-Log "Found openclaw executable: $found"
+		# prepare log path
 		$log = Join-Path $env:TEMP 'openclaw_onboard.log'
 		if (Test-Path $log) { Remove-Item $log -Force }
-		if ($found -like '*.cmd' -or $found -notlike '*.exe' -and $found -notlike '*.ps1') {
-			$cmdLine = "`"$found`" onboard --install-daemon --verbose > `"$log`" 2>&1"
-			Write-Log "Running via cmd: $cmdLine"
-			$p = Start-Process -FilePath cmd.exe -ArgumentList '/c',$cmdLine -Wait -PassThru
-			if ($p.ExitCode -ne 0) { throw "openclaw onboarding failed with exit $($p.ExitCode)" }
-		} elseif ($found -like '*.ps1') {
-			$psArgs = "-NoProfile -ExecutionPolicy Bypass -File `"$found`" onboard --install-daemon --verbose"
-			Write-Log "Running PowerShell script: $psArgs"
-			$p = Start-Process -FilePath powershell -ArgumentList $psArgs -Wait -PassThru
-			if ($p.ExitCode -ne 0) { throw "openclaw onboarding failed with exit $($p.ExitCode)" }
-		} else {
-			$exeCmd = "`"$found`" onboard --install-daemon --verbose > `"$log`" 2>&1"
-			Write-Log "Running executable: $exeCmd"
-			$p = Start-Process -FilePath cmd.exe -ArgumentList '/c',$exeCmd -Wait -PassThru
-			if ($p.ExitCode -ne 0) { throw "openclaw onboarding failed with exit $($p.ExitCode)" }
-		}
-		# if we reached here, onboarding may have produced logs
-		if (Test-Path $log) {
-			Write-Log "Onboard log (last 200 lines):"
-			Get-Content $log -Tail 200 | ForEach-Object { Write-Log "  $_" }
-		}
+		# Run inline in the current shell (no spawn), output goes to the current console
+		Write-Log "Running inline: & `"$found`" onboard --install-daemon"
+		& "$found" onboard --install-daemon
+		$rc = $LASTEXITCODE
+		if ($rc -ne 0) { throw "openclaw onboarding failed with exit $rc" }
+
+		# After successful onboarding, run 'openclaw setup' to complete configuration
+		Write-Log "Running inline: & `"$found`" setup"
+		& "$found" setup
+		$rc = $LASTEXITCODE
+		if ($rc -ne 0) { throw "openclaw setup failed with exit $rc" }
 	} else {
 		Write-Log "openclaw executable not found after npm install; candidates were:"
 		$candidates | ForEach-Object { Write-Log "  $_" }
@@ -207,6 +208,10 @@ try {
 	}
 } catch {
 	Write-Log "openclaw onboard failed: $_"
+	if ($log -and (Test-Path $log)) {
+		Write-Log "Onboard log (last 200 lines):"
+		Get-Content $log -Tail 200 | ForEach-Object { Write-Log "  $_" }
+	}
 	Write-Log "Try running the following manually to see detailed output:"
 	Write-Log "  cmd /c openclaw onboard --install-daemon"
 	exit 1
