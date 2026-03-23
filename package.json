@@ -4,18 +4,34 @@
   "version": "0.0.0",
   "type": "commonjs",
   "main": "main.js",
+  "pnpm": {
+    "node-linker": "hoisted"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "electron:dev": "electron .",
-    "electron:build": "electron-packager . OpenClaw --platform=win32 --arch=x64 --out=dist --overwrite"
+    "electron:build": "electron-builder"
+  },
+  "description": "OpenClaw Electron Application",
+  "author": "OpenClaw Team",
+  "build": {
+    "win": {
+      "target": "nsis",
+      "requestedExecutionLevel": "requireAdministrator"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   },
   "dependencies": {
-    "electron": "^30.0.0",
-    "electron-packager": "^17.1.2"
+    "is-elevated": "^4.0.0"
   },
   "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^26.8.1",
     "vite": "^5.4.8"
   }
 }
