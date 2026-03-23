@@ -1,39 +1,39 @@
 @echo off
 chcp 65001 >nul
-REM OpenClaw + Electron 启动脚本
+REM OpenClaw + Electron Startup Script
 
 setlocal enabledelayedexpansion
 
 echo ========================================
-echo OpenClaw Electron 启动向导
+echo OpenClaw Electron Startup Wizard
 echo ========================================
 echo.
-echo 选择操作：
-echo   [1] 首次安装 - 配置 OpenClaw 服务
-echo   [2] 启动已有的 OpenClaw 服务
-echo   [3] 启动 Electron 应用
-echo   [4] 完整启动（服务 + 应用）
+echo Select operation:
+echo   [1] First-time installation - Configure OpenClaw service
+echo   [2] Start existing OpenClaw service
+echo   [3] Start Electron application
+echo   [4] Full startup (service + application)
 echo.
 
 setlocal
-set /p choice="请选择 (1-4): "
+set /p choice="Please select (1-4): "
 
 if "%choice%"=="1" (
     echo.
-    echo 开始首次安装...
-    echo 选择脚本版本：
-    echo   [A] PowerShell 版本（推荐，功能完整）
-    echo   [B] 批处理脚本版本（兼容性好）
+    echo Starting first-time installation...
+    echo Select script version:
+    echo   [A] PowerShell version (recommended, full features)
+    echo   [B] Batch script version (better compatibility)
     echo.
-    set /p version="请选择 (A/B): "
+    set /p version="Please select (A/B): "
     
     if /i "%version%"=="A" (
         echo.
-        echo [*] 运行 PowerShell 安装脚本...
+        echo [*] Running PowerShell installation script...
         powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\install-openclaw-service.ps1"
     ) else (
         echo.
-        echo [*] 运行批处理安装脚本...
+        echo [*] Running batch installation script...
         call "%~dp0scripts\install-openclaw-service.bat"
     )
     goto :EOF
@@ -41,12 +41,12 @@ if "%choice%"=="1" (
 
 if "%choice%"=="2" (
     echo.
-    echo 启动 OpenClaw 服务...
+    echo Starting OpenClaw service...
     net start OpenClawGateway
     if %ERRORLEVEL% EQU 0 (
-        echo [OK] OpenClaw 服务已启动
+        echo [OK] OpenClaw service started
     ) else (
-        echo [!] 服务启动失败，请确保已运行安装脚本
+        echo [!] Service startup failed, please ensure installation script has been run
     )
     pause
     goto :EOF
@@ -54,17 +54,17 @@ if "%choice%"=="2" (
 
 if "%choice%"=="3" (
     echo.
-    echo 启动 Electron 应用...
+    echo Starting Electron application...
     electron .
     goto :EOF
 )
 
 if "%choice%"=="4" (
     echo.
-    echo 启动 OpenClaw 服务...
+    echo Starting OpenClaw service...
     net start OpenClawGateway
     if %ERRORLEVEL% NEQ 0 (
-        echo [!] 服务启动失败，请先运行安装脚本
+        echo [!] Service startup failed, please run installation script first
         pause
         goto :EOF
     )
@@ -72,11 +72,11 @@ if "%choice%"=="4" (
     timeout /t 3 /nobreak
     
     echo.
-    echo 启动 Electron 应用...
+    echo Starting Electron application...
     electron .
     goto :EOF
 )
 
-echo [X] 无效选择
+echo [X] Invalid selection
 pause
 
