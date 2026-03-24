@@ -1,18 +1,18 @@
-import { contextBridge, ipcRenderer } from 'electron'
-import { IPC_CHANNELS } from '../shared/ipcChannels'
+const { contextBridge, ipcRenderer } = require('electron')
+const { IPC_CHANNELS } = require('../shared/ipcChannels.cjs')
 
 // 安全暴露API给渲染进程
 contextBridge.exposeInMainWorld('electronAPI', {
   // 通用方法
   sendMessage: (channel, data) => {
-    const allowedChannels = ['ping', 'get-system-info']
+    const allowedChannels = ['ping', 'get-system-info', ...Object.values(IPC_CHANNELS)]
     if (allowedChannels.includes(channel)) {
       ipcRenderer.send(channel, data)
     }
   },
 
   onMessage: (channel, callback) => {
-    const allowedChannels = ['pong', 'system-info']
+    const allowedChannels = ['pong', 'system-info', ...Object.values(IPC_CHANNELS)]
     if (allowedChannels.includes(channel)) {
       ipcRenderer.on(channel, (event, ...args) => callback(...args))
       return () => ipcRenderer.removeListener(channel, callback)

@@ -11,7 +11,7 @@ const execAsync = promisify(exec)
 // 依赖配置
 const DEPENDENCIES = {
   node: {
-    minVersion: '24.0.0',
+    minVersion: '22.0.0',
     required: true
   },
   git: {

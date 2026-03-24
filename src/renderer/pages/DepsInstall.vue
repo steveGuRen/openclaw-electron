@@ -104,9 +104,10 @@ const handleClearLogs = () => {
 
 // 事件处理函数
 const handleDepsProgress = (data) => {
-  currentStep.value = data.step
-  stepName.value = data.stepName
-  percentage.value = data.percentage
+  console.log('收到进度数据:', data) // 添加调试日志
+  currentStep.value = data.currentStep || 1
+  stepName.value = data.stepName || '处理中...'
+  percentage.value = data.percentage || 0
 }
 
 const handleDepsLog = (data) => {

@@ -1,4 +1,4 @@
-export const IPC_CHANNELS = {
+const IPC_CHANNELS = {
   // 渲染进程 -> 主进程
   DEPS_CHECK: 'deps:check',
   DEPS_INSTALL: 'deps:install',
@@ -22,3 +22,5 @@ export const IPC_CHANNELS = {
   INTEGRATION_SUCCESS: 'integration:success',
   INTEGRATION_ERROR: 'integration:error'
 }
+
+module.exports = { IPC_CHANNELS }
