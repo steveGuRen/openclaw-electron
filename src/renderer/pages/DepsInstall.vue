@@ -69,6 +69,7 @@ import Layout from '../components/Layout.vue'
 import ProgressBar from '../components/ProgressBar.vue'
 import LogViewer from '../components/LogViewer.vue'
 import ErrorTip from '../components/ErrorTip.vue'
+import electron from '../utils/electron'
 
 const router = useRouter()
 const appStore = useAppStore()
@@ -132,6 +133,12 @@ const handleDepsError = (error) => {
 }
 
 const startInstall = async () => {
+  // 检查electronAPI是否可用
+  if (!electron.isAvailable) {
+    ElMessage.error('Electron API 未加载，请重启应用')
+    return
+  }
+
   loading.value = true
   installStatus.value = 'running'
   installError.value = null
@@ -148,13 +155,13 @@ const startInstall = async () => {
     removeListeners.value = []
 
     // 注册事件监听，保存移除函数
-    removeListeners.value.push(window.electronAPI.onDepsProgress(handleDepsProgress))
-    removeListeners.value.push(window.electronAPI.onDepsLog(handleDepsLog))
-    removeListeners.value.push(window.electronAPI.onDepsSuccess(handleDepsSuccess))
-    removeListeners.value.push(window.electronAPI.onDepsError(handleDepsError))
+    removeListeners.value.push(electron.onDepsProgress(handleDepsProgress))
+    removeListeners.value.push(electron.onDepsLog(handleDepsLog))
+    removeListeners.value.push(electron.onDepsSuccess(handleDepsSuccess))
+    removeListeners.value.push(electron.onDepsError(handleDepsError))
 
     // 开始检测依赖
-    await window.electronAPI.checkDeps()
+    await electron.checkDeps()
   } catch (error) {
     installStatus.value = 'error'
     installError.value = {
