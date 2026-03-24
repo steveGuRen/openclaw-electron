@@ -1,10 +1,39 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { execSync } from 'child_process'
 import './ipc.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+
+/**
+ * 检测当前是否有管理员权限（仅Windows平台）
+ * @returns {boolean} 是否具有管理员权限
+ */
+function hasAdminPrivilege() {
+  if (process.platform !== 'win32') {
+    // 非Windows平台无需检测UAC
+    return true
+  }
+
+  try {
+    // 使用net session命令检测管理员权限，无权限时会执行失败
+    execSync('net session', { stdio: 'ignore' })
+    return true
+  } catch (error) {
+    return false
+  }
+}
+
+// 启动时检测管理员权限
+if (!hasAdminPrivilege()) {
+  dialog.showErrorBox(
+    '权限不足',
+    'Dclaw 需要管理员权限才能正常运行，请右键点击程序，选择 "以管理员身份运行"。'
+  )
+  app.exit(1)
+}
 
 let mainWindow = null
 const isDev = process.argv.includes('--dev')

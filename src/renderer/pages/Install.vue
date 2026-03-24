@@ -119,9 +119,9 @@ const handleClearLogs = () => {
 
 // 事件处理函数
 const handleInstallProgress = (data) => {
-  currentStep.value = data.step
-  stepName.value = data.stepName
-  percentage.value = data.percentage
+  currentStep.value = data.currentStep || 1
+  stepName.value = data.stepName || '处理中...'
+  percentage.value = data.percentage || 0
 }
 
 const handleInstallLog = (data) => {
@@ -166,8 +166,8 @@ const startInstall = async () => {
     removeListeners.value.push(window.electronAPI.onInstallSuccess(handleInstallSuccess))
     removeListeners.value.push(window.electronAPI.onInstallError(handleInstallError))
 
-    // 获取配置并开始安装
-    const config = appStore.installConfig
+    // 获取配置并开始安装，转换为普通对象避免IPC克隆错误
+    const config = { ...appStore.installConfig }
     addLog('info', `使用配置: LLM供应商=${config.llmProvider}, 机器人名称=${config.botName}`)
 
     await window.electronAPI.installOpenclaw(config)

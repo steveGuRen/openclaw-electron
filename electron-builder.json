@@ -7,7 +7,8 @@
   "win": {
     "target": ["nsis", "portable"],
     "icon": "public/icon.ico",
-    "sign": false
+    "sign": false,
+    "requestedExecutionLevel": "requireAdministrator"
   },
   "mac": {
     "target": ["dmg", "zip"],
@@ -30,5 +31,23 @@
     "src/workers/**/*",
     "src/shared/**/*",
     "node_modules/**/*"
-  ]
+  ],
+  "extraResources": [
+    {
+      "from": "resources/bin",
+      "to": "bin",
+      "filter": ["**/*"]
+    }
+  ],
+  "publish": [
+    {
+      "provider": "generic",
+      "url": "http://localhost/"
+    }
+  ],
+  "directories": {
+    "buildResources": "public"
+  },
+  "buildDependenciesFromSource": false,
+  "nodeGypRebuild": false
 }

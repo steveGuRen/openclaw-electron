@@ -16,7 +16,7 @@ const DEPENDENCIES = {
   },
   git: {
     minVersion: '2.30.0',
-    required: true
+    required: false
   },
   npm: {
     minVersion: '9.0.0',

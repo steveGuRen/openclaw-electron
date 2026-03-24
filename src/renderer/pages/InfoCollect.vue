@@ -17,6 +17,7 @@
           <el-form-item label="大模型供应商" prop="llmProvider">
             <el-select v-model="formData.llmProvider" placeholder="请选择大模型供应商" style="width: 100%;">
               <el-option label="DeepSeek" value="deepseek" />
+              <el-option label="Anthropic Claude" value="anthropic" />
               <el-option label="z.ai" value="z.ai" />
               <el-option label="z.ai Coding Plan" value="z.ai-coding" />
               <el-option label="Kimi" value="kimi" />
@@ -65,6 +66,22 @@
             <div class="form-tip">留空则使用默认安装路径</div>
           </el-form-item>
 
+          <el-form-item label="API端点" prop="endpoint">
+            <el-input
+              v-model="formData.endpoint"
+              placeholder="请输入自定义API端点（可选）"
+            />
+            <div class="form-tip">留空使用官方默认地址</div>
+          </el-form-item>
+
+          <el-form-item label="模型名称" prop="model">
+            <el-input
+              v-model="formData.model"
+              placeholder="请输入模型名称（可选）"
+            />
+            <div class="form-tip">留空使用默认模型配置</div>
+          </el-form-item>
+
           <el-form-item class="form-actions">
             <el-button type="primary" size="large" @click="handleSubmit" :loading="loading">
               下一步
@@ -94,7 +111,9 @@ const formData = reactive({
   botName: '',
   botDescription: '',
   userName: '',
-  installPath: ''
+  installPath: '',
+  endpoint: '',
+  model: ''
 })
 
 const rules = {

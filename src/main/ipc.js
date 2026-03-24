@@ -96,10 +96,20 @@ ipcMain.on(IPC_CHANNELS.OPENCLAW_INSTALL, withMutex(async (event, config) => {
     const result = await openclawManager.install(
       config,
       (progress, message) => {
-        event.reply(IPC_CHANNELS.INSTALL_PROGRESS, { progress, message })
+        event.reply(IPC_CHANNELS.INSTALL_PROGRESS, {
+          percentage: progress,
+          stepName: message,
+          currentStep: Math.ceil(progress / (100 / 5)),
+          totalSteps: 5
+        })
       },
       (log) => {
-        event.reply(IPC_CHANNELS.INSTALL_LOG, { log })
+        if (log && log.trim()) { // 过滤空日志
+          event.reply(IPC_CHANNELS.INSTALL_LOG, {
+            type: 'info',
+            content: log
+          })
+        }
       }
     )
 
