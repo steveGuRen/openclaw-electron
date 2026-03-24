@@ -29,9 +29,11 @@ dist-ssr
 # Dclaw specific
 dist/
 release/
+test-build/
 node_modules/
 *.log
 .DS_Store
 *.exe
 *.dmg
 *.AppImage
+/release-new/

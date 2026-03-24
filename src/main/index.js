@@ -37,7 +37,7 @@ function createWindow() {
     height: 900,
     title: 'Dclaw',
     webPreferences: {
-      preload: path.join(__dirname, '../../preload.js'),
+      preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true, // 必须启用，安全要求
       nodeIntegration: false, // 必须禁用，安全要求
       sandbox: false, // 因为需要使用preload，所以设置为false

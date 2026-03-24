@@ -58,8 +58,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   // Openclaw安装相关
-  installOpenclaw: () => {
-    ipcRenderer.send(IPC_CHANNELS.OPENCLAW_INSTALL)
+  installOpenclaw: (config) => {
+    ipcRenderer.send(IPC_CHANNELS.OPENCLAW_INSTALL, config)
   },
 
   onInstallProgress: (callback) => {

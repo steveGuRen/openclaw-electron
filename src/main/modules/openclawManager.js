@@ -175,7 +175,7 @@ class OpenclawManager {
       // 步骤4: 克隆仓库
       progressCallback?.(30, '克隆OpenClaw仓库...')
       log(`克隆仓库: ${OPENCLAW_CONFIG.repoUrl}`)
-      await this.cloneRepository(log)
+      await this.cloneRepository(log, env)
 
       // 步骤5: 安装依赖
       progressCallback?.(50, '安装项目依赖...')
@@ -259,7 +259,7 @@ class OpenclawManager {
       await this.stopService(log)
 
       // 删除安装目录
-      if (this.installDir && this.installDir !== this.baseInstallDir) {
+      if (this.installDir) {
         await fs.rm(this.installDir, { recursive: true, force: true })
         log(`已删除安装目录: ${this.installDir}`)
       }
@@ -273,7 +273,7 @@ class OpenclawManager {
   /**
    * 克隆仓库
    */
-  async cloneRepository(log) {
+  async cloneRepository(log, env) {
     try {
       // 创建临时目录进行安装
       const tempInstallDir = `${this.installDir}.tmp.${Date.now()}`
@@ -285,6 +285,7 @@ class OpenclawManager {
         command: 'git',
         args: ['clone', '--depth', '1', '-b', OPENCLAW_CONFIG.defaultBranch, OPENCLAW_CONFIG.repoUrl, '.'],
         cwd: tempInstallDir,
+        env,
         onStdout: (data) => log(data.trim()),
         onStderr: (data) => log(data.trim())
       })
@@ -580,6 +581,7 @@ class OpenclawManager {
         command: 'git',
         args: ['pull', 'origin', OPENCLAW_CONFIG.defaultBranch],
         cwd: this.installDir,
+        env,
         onStdout: (data) => log(data.trim()),
         onStderr: (data) => log(data.trim())
       })
