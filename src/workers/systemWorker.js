@@ -1,5 +1,5 @@
 import { parentPort } from 'worker_threads'
-import { exec } from 'child_process'
+import { exec, spawn } from 'child_process'
 import path from 'path'
 import os from 'os'
 import fs from 'fs/promises'
@@ -83,7 +83,8 @@ const executeCommand = async (options) => {
       ...env
     }
 
-    exec(cmdStr, {
+    // 保存 exec 返回的 ChildProcess 对象
+    const childProcess = exec(cmdStr, {
       cwd,
       env: processEnv,
       shell,
@@ -122,12 +123,8 @@ const executeCommand = async (options) => {
       })
     })
 
-    runningProcesses.set(taskId, {
-      killed: false,
-      kill: () => {
-        console.warn('killTask 对于 exec 命令的支持有限')
-      }
-    })
+    // 存储 ChildProcess 对象而不是模拟对象
+    runningProcesses.set(taskId, childProcess)
 
   } catch (error) {
     parentPort.postMessage({
@@ -143,13 +140,19 @@ const executeCommand = async (options) => {
  * @param {string} taskId - 任务ID
  */
 const killProcess = (taskId) => {
-  const processInfo = runningProcesses.get(taskId)
-  if (processInfo && !processInfo.killed) {
-    processInfo.killed = true
+  const childProcess = runningProcesses.get(taskId)
+  if (childProcess && !childProcess.killed) {
+    childProcess.kill('SIGTERM')
+    setTimeout(() => {
+      if (!childProcess.killed) {
+        childProcess.kill('SIGKILL')
+      }
+    }, 5000)
+    runningProcesses.delete(taskId)
     parentPort.postMessage({
       type: 'killed',
       taskId,
-      message: '注意：exec 命令的终止支持有限'
+      message: '进程已终止'
     })
   } else {
     parentPort.postMessage({
