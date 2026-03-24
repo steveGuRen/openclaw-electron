@@ -1,5 +1,5 @@
 import { parentPort } from 'worker_threads'
-import { spawn } from 'child_process'
+import { exec } from 'child_process'
 import path from 'path'
 import os from 'os'
 import fs from 'fs/promises'
@@ -25,108 +25,108 @@ const downloadTasks = new Map()
  * @param {number} options.timeout - 超时时间（毫秒）
  */
 const executeCommand = async (options) => {
-  const { command, args = [], cwd, env = {}, taskId, shell = false, timeout = 3600000 } = options
+  let { command, args = [], cwd, env = {}, taskId, shell = false, timeout = 3600000 } = options
 
   try {
-    // 安全校验
+    // 安全校验（保持不变）
     if (!security.validateCommand(command, args)) {
       throw new Error(`命令不被允许: ${command}`)
     }
 
-    // 准备环境变量，合并系统环境变量
+    // 优先使用内置工具（保持不变）
+    let resourcesPath = process.resourcesPath
+    if (!resourcesPath && process.env.NODE_ENV === 'development') {
+      resourcesPath = path.join(process.cwd(), 'resources')
+    } else if (!resourcesPath) {
+      resourcesPath = path.join(process.execPath, '../resources')
+    }
+    const binPath = path.join(resourcesPath, 'bin')
+
+    const builtInTools = {
+      'git': path.join(binPath, 'git', 'cmd', 'git.exe'),
+      'pnpm': path.join(binPath, 'pnpm.exe'),
+      'npm': path.join(binPath, 'npm', 'bin', 'npm-cli.js')
+    }
+
+    if (builtInTools[command]) {
+      const toolPath = builtInTools[command]
+      try {
+        await fs.access(toolPath)
+        if (toolPath.endsWith('.js')) {
+          args = [toolPath, ...args]
+          command = process.execPath
+        } else {
+          command = toolPath
+        }
+        shell = false
+        console.log(`使用内置工具: ${command}`)
+      } catch (e) {
+        console.log(`内置工具不存在，使用系统命令: ${command}`, e.message)
+      }
+    }
+
+    const escapeArg = (arg) => {
+      if (arg.includes(' ')) {
+        return `"${arg.replace(/"/g, '\\"')}"`
+      }
+      return arg
+    }
+
+    const cmdStr = shell
+      ? `${command} ${args.map(escapeArg).join(' ')}`
+      : [command, ...args.map(escapeArg)].join(' ')
+
+    console.log(`执行命令: ${cmdStr}`)
+
     const processEnv = {
       ...process.env,
       ...env
     }
 
-    // 启动子进程
-    const childProcess = spawn(command, args, {
+    exec(cmdStr, {
       cwd,
       env: processEnv,
       shell,
       windowsHide: true,
-      stdio: ['ignore', 'pipe', 'pipe']
-    })
-
-    // 存储进程引用
-    runningProcesses.set(taskId, childProcess)
-
-    // 设置超时
-    const timeoutId = setTimeout(() => {
-      if (childProcess && !childProcess.killed) {
-        childProcess.kill('SIGTERM')
-        setTimeout(() => {
-          if (!childProcess.killed) {
-            childProcess.kill('SIGKILL')
-          }
-        }, 5000)
-        parentPort.postMessage({
-          type: 'error',
-          taskId,
-          error: `命令执行超时（${timeout}ms）`
-        })
-      }
-    }, timeout)
-
-    let stdout = ''
-    let stderr = ''
-
-    // 处理标准输出
-    childProcess.stdout.on('data', (data) => {
-      const output = data.toString()
-      stdout += output
-      parentPort.postMessage({
-        type: 'stdout',
-        taskId,
-        data: security.desensitizeLog(output)
-      })
-    })
-
-    // 处理标准错误
-    childProcess.stderr.on('data', (data) => {
-      const output = data.toString()
-      stderr += output
-      parentPort.postMessage({
-        type: 'stderr',
-        taskId,
-        data: security.desensitizeLog(output)
-      })
-    })
-
-    // 处理进程退出
-    childProcess.on('close', (code) => {
-      clearTimeout(timeoutId)
+      timeout,
+      maxBuffer: 1024 * 1024 * 100
+    }, (error, stdout, stderr) => {
       runningProcesses.delete(taskId)
 
-      if (code === 0) {
-        parentPort.postMessage({
-          type: 'exit',
-          taskId,
-          code,
-          stdout: security.desensitizeLog(stdout),
-          stderr: security.desensitizeLog(stderr)
-        })
-      } else {
-        parentPort.postMessage({
-          type: 'error',
-          taskId,
-          error: `命令执行失败，退出码: ${code}`,
-          code,
-          stdout: security.desensitizeLog(stdout),
-          stderr: security.desensitizeLog(stderr)
-        })
+      if (error) {
+        if (error.code === 'ETIMEDOUT') {
+          parentPort.postMessage({
+            type: 'error',
+            taskId,
+            error: `命令执行超时（${timeout}ms）`
+          })
+        } else {
+          parentPort.postMessage({
+            type: 'error',
+            taskId,
+            error: `命令执行失败: ${error.message}`,
+            code: error.code,
+            stdout: security.desensitizeLog(stdout),
+            stderr: security.desensitizeLog(stderr)
+          })
+        }
+        return
       }
+
+      parentPort.postMessage({
+        type: 'exit',
+        taskId,
+        code: 0,
+        stdout: security.desensitizeLog(stdout),
+        stderr: security.desensitizeLog(stderr)
+      })
     })
 
-    // 处理进程错误
-    childProcess.on('error', (error) => {
-      clearTimeout(timeoutId)
-      runningProcesses.delete(taskId)
-      parentPort.postMessage({
-        type: 'error',
-        taskId,
-        error: `进程启动失败: ${error.message}`
-      })
+    runningProcesses.set(taskId, {
+      killed: false,
+      kill: () => {
+        console.warn('killTask 对于 exec 命令的支持有限')
+      }
     })
 
   } catch (error) {
@@ -143,19 +143,13 @@ const executeCommand = async (options) => {
  * @param {string} taskId - 任务ID
  */
 const killProcess = (taskId) => {
-  const childProcess = runningProcesses.get(taskId)
-  if (childProcess && !childProcess.killed) {
-    childProcess.kill('SIGTERM')
-    setTimeout(() => {
-      if (!childProcess.killed) {
-        childProcess.kill('SIGKILL')
-      }
-    }, 5000)
-    runningProcesses.delete(taskId)
+  const processInfo = runningProcesses.get(taskId)
+  if (processInfo && !processInfo.killed) {
+    processInfo.killed = true
     parentPort.postMessage({
       type: 'killed',
       taskId,
-      message: '进程已终止'
+      message: '注意：exec 命令的终止支持有限'
     })
   } else {
     parentPort.postMessage({
