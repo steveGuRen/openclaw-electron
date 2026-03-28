@@ -127,18 +127,7 @@ class OpenclawManager {
         }
       }
 
-      // 步骤4: 写入配置文件
-      progressCallback?.(70, '写入配置文件...')
-      log('写入配置文件')
-      await this.writeConfig(config, log)
-
-      // 步骤5: 启动服务
-      progressCallback?.(90, '启动OpenClaw服务...')
-      log('启动OpenClaw服务')
-      const startResult = await this.startService(log)
-      const accessUrl = startResult.accessUrl
-
-      // 步骤6: 保存安装类型到state
+      // 步骤4: 保存安装类型到state
       log(`保存安装类型到state: ${installType}`)
       await state.set('openclaw.installType', installType)
 
@@ -153,7 +142,6 @@ class OpenclawManager {
         success: true,
         installDir: this.installDir,
         version: await this.getCurrentVersion(),
-        accessUrl,
         installType,
         logs: this.getInstallLogs()
       }
@@ -346,9 +334,6 @@ class OpenclawManager {
   async rollbackInstallation(log) {
     try {
       log('开始回滚安装...')
-
-      // 停止服务
-      await this.stopService(log)
 
       // 尝试卸载npm包
       try {
