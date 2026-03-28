@@ -3,7 +3,6 @@ import fs from 'fs/promises'
 import path from 'path'
 import { exec } from 'child_process'
 import { promisify } from 'util'
-import systemWorkerManager from './systemWorkerManager.js'
 import security from './security.js'
 
 const execAsync = promisify(exec)
@@ -467,123 +466,131 @@ class DepsManager {
   }
 
   /**
-   * 安装Node.js
+   * 安装Node.js（使用scoop或包管理器）
    */
   async installNode(log) {
     log('开始安装Node.js...')
     const platform = process.platform
-    const arch = process.arch === 'x64' ? 'x64' : 'arm64'
-    const version = DEPENDENCIES.node.minVersion
 
-    let downloadUrl = ''
-    let fileExt = ''
     if (platform === 'win32') {
-      downloadUrl = `https://nodejs.org/dist/v${version}/node-v${version}-win-${arch}.zip`
-      fileExt = '.zip'
+      // Windows系统使用Scoop安装
+      log('尝试使用Scoop安装Node.js...')
+      try {
+        // 检查Scoop是否已安装
+        try {
+          await execAsync('scoop help')
+        } catch (scoopError) {
+          log('Scoop未安装，正在安装Scoop...')
+          await execAsync(`powershell -Command "irm get.scoop.sh | iex"`)
+        }
+
+        // 使用Scoop安装Node.js
+        const nodeResult = await execAsync('scoop install nodejs-lts')
+        log('Node.js安装成功')
+        log(nodeResult.stdout)
+
+        // 获取Node.js版本
+        const versionResult = await execAsync('node -v')
+        const npmVersionResult = await execAsync('npm -v')
+        log(`Node.js版本: ${versionResult.stdout.trim()}`)
+        log(`npm版本: ${npmVersionResult.stdout.trim()}`)
+
+        return
+      } catch (scoopError) {
+        log(`Scoop安装失败: ${scoopError.message}`)
+        log('正在尝试使用winget安装Node.js...')
+      }
+
+      // 尝试使用winget安装
+      try {
+        await execAsync('winget install --id OpenJS.NodeJS --silent --accept-package-agreements --accept-source-agreements')
+        log('Node.js安装成功')
+        return
+      } catch (wingetError) {
+        log(`winget安装失败: ${wingetError.message}`)
+        throw new Error('Node.js安装失败，请手动安装: https://nodejs.org/')
+      }
     } else if (platform === 'darwin') {
-      downloadUrl = `https://nodejs.org/dist/v${version}/node-v${version}-darwin-${arch}.tar.gz`
-      fileExt = '.tar.gz'
+      // macOS系统使用Homebrew安装
+      try {
+        log('尝试使用Homebrew安装Node.js...')
+        await execAsync('brew install node')
+        log('Node.js安装成功')
+        return
+      } catch (brewError) {
+        log(`Homebrew安装失败: ${brewError.message}`)
+        throw new Error('Node.js安装失败，请手动安装: https://nodejs.org/')
+      }
     } else if (platform === 'linux') {
-      downloadUrl = `https://nodejs.org/dist/v${version}/node-v${version}-linux-${arch}.tar.xz`
-      fileExt = '.tar.xz'
+      // Linux系统使用包管理器安装
+      try {
+        log('尝试使用apt安装Node.js...')
+        await execAsync('sudo apt update && sudo apt install -y nodejs npm')
+        log('Node.js安装成功')
+        return
+      } catch (aptError) {
+        log(`apt安装失败: ${aptError.message}`)
+        throw new Error('Node.js安装失败，请手动安装: https://nodejs.org/')
+      }
     } else {
       throw new Error(`不支持的平台: ${platform}`)
-    }
-
-    log(`下载Node.js: ${downloadUrl}`)
-    const downloadPath = path.join(INSTALL_CACHE_DIR, `node-v${version}-${platform}-${arch}${fileExt}`)
-    const installDir = path.join(os.homedir(), '.dclaw', 'tools', 'node')
-
-    try {
-      // 下载Node.js
-      await systemWorkerManager.downloadFileAsync({
-        url: downloadUrl,
-        destPath: downloadPath,
-        onDownloadProgress: (progress) => {
-          log(`下载进度: ${progress}%`)
-        }
-      })
-      log('Node.js下载完成')
-
-      // 解压文件
-      log('开始解压Node.js...')
-      await systemWorkerManager.extractFileAsync({
-        filePath: downloadPath,
-        destDir: installDir
-      })
-      log('Node.js解压完成')
-
-      // 保存Node.js安装路径，在执行命令时通过env参数传递
-      const nodeBinDir = platform === 'win32'
-        ? installDir
-        : path.join(installDir, `node-v${version}-${platform}-${arch}`, 'bin')
-
-      this.nodeBinDir = nodeBinDir
-      log('Node.js安装成功')
-
-    } catch (error) {
-      log(`Node.js安装失败: ${error.message}`)
-      throw new Error(`Node.js自动安装失败，请手动安装Node.js >= 24.0.0，下载地址: https://nodejs.org/`)
     }
   }
 
   /**
-   * 安装Git
+   * 安装Git（使用exec方式）
    */
   async installGit(log) {
     log('开始安装Git...')
     const platform = process.platform
 
     if (platform === 'win32') {
+      // Windows系统使用Scoop或winget安装
+      log('尝试使用Scoop安装Git...')
       try {
-        // Windows下尝试使用winget安装
-        log('尝试使用winget安装Git...')
-        await systemWorkerManager.executeCommandAsync({
-          command: 'winget',
-          args: ['install', '--id', 'Git.Git', '--silent', '--accept-package-agreements', '--accept-source-agreements'],
-          onStdout: (data) => log(data.trim()),
-          onStderr: (data) => log(`错误: ${data.trim()}`)
-        })
+        await execAsync('scoop install git')
         log('Git安装成功')
-      } catch (error) {
-        log('winget安装失败，请手动下载并安装Git: https://git-scm.com/download/win')
-        throw error
+        return
+      } catch (scoopError) {
+        log(`Scoop安装失败: ${scoopError.message}`)
+        log('尝试使用winget安装Git...')
+      }
+
+      try {
+        await execAsync('winget install --id Git.Git --silent --accept-package-agreements --accept-source-agreements')
+        log('Git安装成功')
+        return
+      } catch (wingetError) {
+        log(`winget安装失败: ${wingetError.message}`)
+        throw new Error('Git安装失败，请手动下载并安装: https://git-scm.com/download/win')
       }
     } else if (platform === 'darwin') {
-      log('正在使用brew安装Git...')
+      // macOS系统使用Homebrew安装
       try {
-        await systemWorkerManager.executeCommandAsync({
-          command: 'brew',
-          args: ['install', 'git'],
-          onStdout: (data) => log(data.trim()),
-          onStderr: (data) => log(`错误: ${data.trim()}`)
-        })
+        log('正在使用Homebrew安装Git...')
+        const brewResult = await execAsync('brew install git')
         log('Git安装成功')
-      } catch (error) {
-        log('brew安装失败，请手动安装Git: https://git-scm.com/download/mac')
-        throw error
+        log(brewResult.stdout)
+        return
+      } catch (brewError) {
+        log(`Homebrew安装失败: ${brewError.message}`)
+        throw new Error('Git安装失败，请手动安装: https://git-scm.com/download/mac')
       }
     } else if (platform === 'linux') {
-      log('正在使用apt安装Git...')
+      // Linux系统使用apt安装
       try {
-        // 使用数组参数，避免shell注入
-        await systemWorkerManager.executeCommandAsync({
-          command: 'sudo',
-          args: ['apt', 'update'],
-          onStdout: (data) => log(data.trim()),
-          onStderr: (data) => log(`错误: ${data.trim()}`)
-        })
+        log('正在使用apt安装Git...')
+        const updateResult = await execAsync('sudo apt update')
+        log('apt更新成功')
+        log(updateResult.stdout)
 
-        await systemWorkerManager.executeCommandAsync({
-          command: 'sudo',
-          args: ['apt', 'install', '-y', 'git'],
-          onStdout: (data) => log(data.trim()),
-          onStderr: (data) => log(`错误: ${data.trim()}`)
-        })
+        const installResult = await execAsync('sudo apt install -y git')
         log('Git安装成功')
-      } catch (error) {
-        log('apt安装失败，请手动安装Git')
-        throw error
+        log(installResult.stdout)
+        return
+      } catch (aptError) {
+        log(`apt安装失败: ${aptError.message}`)
+        throw new Error('Git安装失败，请手动安装')
       }
     } else {
       throw new Error(`不支持的平台: ${platform}`)
@@ -591,19 +598,17 @@ class DepsManager {
   }
 
   /**
-   * 安装npm
+   * 安装npm（使用exec方式）
    */
   async installNpm(log) {
     log('开始更新npm...')
     try {
-      await systemWorkerManager.executeCommandAsync({
-        command: 'npm',
-        args: ['install', '-g', 'npm@latest'],
-        onStdout: (data) => log(data.trim()),
-        onStderr: (data) => log(`错误: ${data.trim()}`)
-      })
+      const npmResult = await execAsync('npm install -g npm@latest')
+      log('npm更新成功')
+      log(npmResult.stdout)
     } catch (error) {
-      log('npm更新失败，请手动更新: npm install -g npm@latest')
+      log(`npm更新失败: ${error.message}`)
+      log('请手动更新: npm install -g npm@latest')
       throw error
     }
   }

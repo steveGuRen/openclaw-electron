@@ -16,13 +16,7 @@
         >
           <el-form-item label="大模型供应商" prop="llmProvider">
             <el-select v-model="formData.llmProvider" placeholder="请选择大模型供应商" style="width: 100%;">
-              <el-option label="DeepSeek" value="deepseek" />
-              <el-option label="Anthropic Claude" value="anthropic" />
-              <el-option label="z.ai" value="z.ai" />
-              <el-option label="z.ai Coding Plan" value="z.ai-coding" />
-              <el-option label="Kimi" value="kimi" />
-              <el-option label="MiniMax" value="minimax" />
-              <el-option label="通义千问" value="qwen" />
+              <el-option label="OpenAI" value="openai" />
             </el-select>
           </el-form-item>
 
@@ -30,7 +24,7 @@
             <el-input
               v-model="formData.apiKey"
               type="password"
-              placeholder="请输入大模型 API Key"
+              placeholder="请输入 OpenAI API Key，例如：sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
               show-password
             />
           </el-form-item>
@@ -69,17 +63,17 @@
           <el-form-item label="API端点" prop="endpoint">
             <el-input
               v-model="formData.endpoint"
-              placeholder="请输入自定义API端点（可选）"
+              placeholder="请输入 OpenAI API 端点，例如：https://api.openai.com/v1"
             />
-            <div class="form-tip">留空使用官方默认地址</div>
+            <div class="form-tip">默认使用 OpenAI 官方地址</div>
           </el-form-item>
 
           <el-form-item label="模型名称" prop="model">
             <el-input
               v-model="formData.model"
-              placeholder="请输入模型名称（可选）"
+              placeholder="请输入模型名称，例如：gpt-4, gpt-3.5-turbo"
             />
-            <div class="form-tip">留空使用默认模型配置</div>
+            <div class="form-tip">常用模型：gpt-4, gpt-3.5-turbo</div>
           </el-form-item>
 
           <el-form-item class="form-actions">
@@ -106,14 +100,14 @@ const formRef = ref(null)
 const loading = ref(false)
 
 const formData = reactive({
-  llmProvider: 'deepseek',
+  llmProvider: 'openai',
   apiKey: '',
-  botName: '',
-  botDescription: '',
+  botName: 'AI 助手',
+  botDescription: '一个智能的 AI 助手，可以帮助您完成各种任务',
   userName: '',
   installPath: '',
-  endpoint: '',
-  model: ''
+  endpoint: 'https://api.openai.com/v1',
+  model: 'gpt-4'
 })
 
 const rules = {

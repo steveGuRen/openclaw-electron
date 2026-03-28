@@ -4,7 +4,7 @@ export const useAppStore = defineStore('app', {
   state: () => ({
     // 安装配置
     installConfig: {
-      llmProvider: 'deepseek',
+      llmProvider: 'openai',
       apiKey: '',
       botName: '',
       botDescription: '',

@@ -83,7 +83,7 @@ const executeCommand = async (options) => {
       ...env
     }
 
-    // 保存 exec 返回的 ChildProcess 对象
+    // 使用 exec 执行命令，但通过 stream 监听实时输出
     const childProcess = exec(cmdStr, {
       cwd,
       env: processEnv,
@@ -123,7 +123,30 @@ const executeCommand = async (options) => {
       })
     })
 
-    // 存储 ChildProcess 对象而不是模拟对象
+    // 监听实时输出（与 spawn 方式兼容）
+    if (childProcess.stdout) {
+      childProcess.stdout.on('data', (data) => {
+        const output = data.toString()
+        parentPort.postMessage({
+          type: 'stdout',
+          taskId,
+          data: security.desensitizeLog(output)
+        })
+      })
+    }
+
+    if (childProcess.stderr) {
+      childProcess.stderr.on('data', (data) => {
+        const output = data.toString()
+        parentPort.postMessage({
+          type: 'stderr',
+          taskId,
+          data: security.desensitizeLog(output)
+        })
+      })
+    }
+
+    // 存储 ChildProcess 对象
     runningProcesses.set(taskId, childProcess)
 
   } catch (error) {

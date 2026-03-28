@@ -2,19 +2,18 @@
   "appId": "com.do1.dclaw",
   "productName": "Dclaw",
   "directories": {
-    "output": "release"
+    "output": "release",
+    "buildResources": "public"
   },
   "win": {
     "target": ["nsis", "portable"],
     "icon": "public/icon.ico",
-    "sign": false,
     "requestedExecutionLevel": "requireAdministrator"
   },
   "mac": {
     "target": ["dmg", "zip"],
     "icon": "public/icon.icns",
-    "hardenedRuntime": true,
-    "sign": false
+    "hardenedRuntime": true
   },
   "linux": {
     "target": ["AppImage", "deb", "rpm"],
@@ -39,15 +38,11 @@
       "filter": ["**/*"]
     }
   ],
-  "publish": [
-    {
-      "provider": "generic",
-      "url": "http://localhost/"
-    }
-  ],
-  "directories": {
-    "buildResources": "public"
+  "publish": {
+    "provider": "generic",
+    "url": "http://localhost/"
   },
   "buildDependenciesFromSource": false,
-  "nodeGypRebuild": false
+  "nodeGypRebuild": false,
+  "forceCodeSigning": false
 }
