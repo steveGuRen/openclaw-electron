@@ -64,7 +64,7 @@ import Layout from '../components/Layout.vue'
 const router = useRouter()
 
 const handleAgree = () => {
-  router.push('/info')
+  router.push('/deps-install')
 }
 
 const handleReject = () => {

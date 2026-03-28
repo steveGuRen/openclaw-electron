@@ -56,7 +56,7 @@ class OpenclawManager {
    * @param {Function} logCallback - 日志回调
    * @returns {object} 安装结果
    */
-  async install(config = {}, progressCallback = null, logCallback = null) {
+  async install(config = null, progressCallback = null, logCallback = null) {
     this.installProgress = 0
     this.installLogs = []
     let installType = null
@@ -72,9 +72,8 @@ class OpenclawManager {
     try {
       log('开始安装OpenClaw')
 
-      // 步骤1: 验证配置、检查依赖
-      progressCallback?.(5, '验证安装配置...')
-      this.validateInstallConfig(config, log)
+      // 步骤1: 检查依赖（如果有配置则验证，否则跳过）
+      progressCallback?.(5, '检查系统依赖...')
 
       progressCallback?.(10, '检查系统依赖...')
       const depsCheck = await depsManager.checkAllDependencies(
@@ -134,9 +133,11 @@ class OpenclawManager {
       progressCallback?.(100, '安装完成')
       log(`OpenClaw安装成功，安装类型: ${installType}`)
 
-      // 清理敏感信息
-      security.clearSensitiveData(config.apiKey)
-      if (config.secret) security.clearSensitiveData(config.secret)
+      // 清理敏感信息（只有在有配置时才执行）
+      if (config) {
+        if (config.apiKey) security.clearSensitiveData(config.apiKey)
+        if (config.secret) security.clearSensitiveData(config.secret)
+      }
 
       return {
         success: true,

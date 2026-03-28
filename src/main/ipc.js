@@ -256,3 +256,24 @@ ipcMain.handle('integration:validate-config', async (_, config) => {
 ipcMain.handle('integration:test-connection', async (_, config) => {
   return await integrationManager.testWecomConnection(config)
 })
+
+// 保存OpenClaw配置
+ipcMain.handle('openclaw:save-config', async (_, config) => {
+  try {
+    const log = []
+    const logger = (msg) => log.push(msg)
+
+    await openclawManager.writeConfig(config, logger)
+
+    return {
+      success: true,
+      logs: log
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+})
+                      

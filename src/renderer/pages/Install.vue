@@ -25,7 +25,7 @@
         />
 
         <!-- 成功提示 -->
-        <div v-if="installStatus === 'success' && accessUrl" class="success-tip">
+        <div v-if="installStatus === 'success'" class="success-tip">
           <el-alert
             title="安装成功"
             type="success"
@@ -33,8 +33,8 @@
             :closable="false"
           >
             <template #default>
-              <p>openclaw 服务已成功安装并启动！</p>
-              <p class="access-url">访问地址: <a :href="accessUrl" target="_blank">{{ accessUrl }}</a></p>
+              <p>openclaw 服务已成功安装！</p>
+              <p>您现在可以在主页面进行配置或启动服务。</p>
             </template>
           </el-alert>
         </div>
@@ -59,7 +59,7 @@
             size="large"
             @click="handleNext"
           >
-            下一步（集成企微）
+            完成
           </el-button>
           <el-button
             v-else
@@ -151,7 +151,7 @@ const startInstall = async () => {
   logs.value = []
   percentage.value = 0
   currentStep.value = 1
-  stepName.value = '下载安装包中'
+  stepName.value = '安装 openclaw 中'
 
   addLog('info', '开始安装 openclaw...')
 
@@ -166,11 +166,9 @@ const startInstall = async () => {
     removeListeners.value.push(window.electronAPI.onInstallSuccess(handleInstallSuccess))
     removeListeners.value.push(window.electronAPI.onInstallError(handleInstallError))
 
-    // 获取配置并开始安装，转换为普通对象避免IPC克隆错误
-    const config = { ...appStore.installConfig }
-    addLog('info', `使用配置: LLM供应商=${config.llmProvider}, 机器人名称=${config.botName}`)
-
-    await window.electronAPI.installOpenclaw(config)
+    // 简化安装逻辑，只安装 openclaw，不传递配置
+    addLog('info', '正在安装 openclaw 服务...')
+    await window.electronAPI.installOpenclaw()
   } catch (error) {
     installStatus.value = 'error'
     installError.value = {
@@ -188,7 +186,7 @@ const handleRetry = () => {
 }
 
 const handleNext = () => {
-  router.push('/integration')
+  router.push('/')
 }
 
 const handleCancel = () => {

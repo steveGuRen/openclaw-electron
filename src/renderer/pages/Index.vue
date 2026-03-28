@@ -31,11 +31,15 @@
             <p>对已安装的 openclaw 进行管理操作</p>
           </div>
           <div class="sub-buttons">
-            <el-button type="primary" @click="handleIntegration">
+            <el-button type="primary" @click="handleConfig">
+              <el-icon><Setting /></el-icon>
+              配置 openclaw
+            </el-button>
+            <el-button type="success" @click="handleIntegration">
               <el-icon><Connection /></el-icon>
               集成企微
             </el-button>
-            <el-button type="success" @click="handleUpdate">
+            <el-button type="info" @click="handleUpdate">
               <el-icon><Refresh /></el-icon>
               更新 openclaw
             </el-button>
@@ -74,6 +78,10 @@ const router = useRouter()
 
 const handleInstallNew = () => {
   router.push('/risk')
+}
+
+const handleConfig = () => {
+  router.push('/config')
 }
 
 const handleIntegration = () => {

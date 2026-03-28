@@ -119,6 +119,11 @@ class ElectronAPI {
     return this.call('onUninstallError', callback)
   }
 
+  // 配置相关
+  saveOpenclawConfig(config) {
+    return this.call('saveOpenclawConfig', config)
+  }
+
   // 移除监听器
   removeAllListeners(channel) {
     return this.call('removeAllListeners', channel)

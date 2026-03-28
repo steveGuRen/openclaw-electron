@@ -12,11 +12,6 @@ const routes = [
     component: () => import('../pages/Risk.vue')
   },
   {
-    path: '/info',
-    name: 'InfoCollect',
-    component: () => import('../pages/InfoCollect.vue')
-  },
-  {
     path: '/deps-install',
     name: 'DepsInstall',
     component: () => import('../pages/DepsInstall.vue')
@@ -50,6 +45,11 @@ const routes = [
     path: '/uninstall',
     name: 'Uninstall',
     component: () => import('../pages/Uninstall.vue')
+  },
+  {
+    path: '/config',
+    name: 'Config',
+    component: () => import('../pages/Config.vue')
   }
 ]
 

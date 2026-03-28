@@ -21,7 +21,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   invoke: (channel, data) => {
-    const allowedChannels = ['get-app-version', 'open-dialog']
+    const allowedChannels = ['get-app-version', 'open-dialog', 'openclaw:status', 'integration:validate-config', 'integration:test-connection', 'openclaw:save-config']
     if (allowedChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, data)
     }
@@ -140,6 +140,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 卸载相关
   uninstallOpenclaw: () => {
     ipcRenderer.send(IPC_CHANNELS.OPENCLAW_UNINSTALL)
+  },
+
+  // 配置相关
+  saveOpenclawConfig: (config) => {
+    return ipcRenderer.invoke('openclaw:save-config', config)
   },
 
   onUninstallProgress: (callback) => {
