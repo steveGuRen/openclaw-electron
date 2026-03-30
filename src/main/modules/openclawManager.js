@@ -21,12 +21,12 @@ const OPENCLAW_CONFIG = {
   npmPackageVersion: 'latest',
   defaultBranch: 'main',
 
-  // Path configuration
-  baseInstallDir: path.join(os.homedir(), '.dclaw', 'openclaw'),
-  configFile: '.env',
+  // Path configuration - 符合官方标准
+  baseStateDir: path.join(os.homedir(), '.openclaw'),
+  configFile: 'openclaw.json',
 
   // Server configuration
-  defaultPort: 9600,
+  defaultPort: 18789, // 官方默认端口
 
   // Process configuration
   dashboardCommand: ['npm', 'run', 'dashboard'],
@@ -36,13 +36,13 @@ const OPENCLAW_CONFIG = {
   supportedProviders: new Set(['openai'])
 }
 
-// Derived configuration
-OPENCLAW_CONFIG.configPath = path.join(OPENCLAW_CONFIG.baseInstallDir, OPENCLAW_CONFIG.configFile);
+// Derived configuration - 符合官方标准
+OPENCLAW_CONFIG.configPath = path.join(OPENCLAW_CONFIG.baseStateDir, OPENCLAW_CONFIG.configFile);
 
 class OpenclawManager {
   constructor() {
-    this.baseInstallDir = OPENCLAW_CONFIG.baseInstallDir
-    this.installDir = OPENCLAW_CONFIG.baseInstallDir
+    this.baseInstallDir = OPENCLAW_CONFIG.baseStateDir
+    this.installDir = OPENCLAW_CONFIG.baseStateDir
     this.installProgress = 0
     this.installLogs = []
     this.runningProcess = null
@@ -217,111 +217,115 @@ class OpenclawManager {
   }
 
   /**
-   * 写入配置文件
+   * 写入配置文件 - 符合官方OpenClaw配置标准
    */
   async writeConfig(config, log) {
     try {
       const configPath = this.getConfigFilePath()
 
-      // 确保配置目录存在
+      // 确保配置目录存在（符合官方标准的目录结构）
       const configDir = path.dirname(configPath)
       await fs.mkdir(configDir, { recursive: true })
       log(`确保配置目录存在: ${configDir}`)
 
       // 读取现有配置（如果存在）
-      let existingConfig = ''
+      let existingConfig = null
       try {
-        existingConfig = await fs.readFile(configPath, 'utf8')
-      } catch {}
+        const existingContent = await fs.readFile(configPath, 'utf8')
+        existingConfig = JSON.parse(existingContent)
+      } catch {
+        log('未找到现有配置，将创建新配置')
+      }
 
-      // 构建新配置
-      const configEntries = []
+      // 构建新配置 - 符合官方JSON结构
+      const newConfig = {
+        meta: {
+          lastTouchedVersion: '0.1.0',
+          lastTouchedAt: new Date().toISOString()
+        },
+        gateway: {
+          mode: 'local',
+          port: OPENCLAW_CONFIG.defaultPort,
+          auth: {
+            mode: 'token',
+            token: 'default-token' // 可以考虑生成随机token
+          }
+        },
+        agents: {
+          defaults: {
+            workspace: path.join(OPENCLAW_CONFIG.baseStateDir, 'workspace')
+          }
+        },
+        models: {
+          providers: {}
+        },
+        tools: {},
+        channels: {}
+      }
 
-      // 基础配置
-      configEntries.push(`PORT=${OPENCLAW_CONFIG.defaultPort}`)
-      configEntries.push(`HOST=127.0.0.1`)
-      configEntries.push(`NODE_ENV=production`)
-
-      // 大模型配置
+      // 大模型配置 - 符合官方models.providers结构
       if (config.llmProvider) {
-        configEntries.push(`LLM_PROVIDER=${config.llmProvider}`)
-
-        // OpenAI 配置
         if (config.llmProvider === 'openai') {
-          if (config.apiKey) {
-            configEntries.push(`OPENAI_API_KEY=${config.apiKey}`)
-          }
-
-          // 模型配置
-          if (config.model) {
-            configEntries.push(`OPENAI_MODEL=${config.model}`)
-          } else {
-            configEntries.push(`OPENAI_MODEL=gpt-4`)
-          }
-
-          if (config.endpoint) {
-            configEntries.push(`OPENAI_BASE_URL=${config.endpoint}`)
-          } else {
-            configEntries.push(`OPENAI_BASE_URL=https://api.openai.com/v1`)
+          newConfig.models.providers.openai = {
+            apiKey: config.apiKey || '',
+            model: config.model || 'gpt-4',
+            baseUrl: config.endpoint || 'https://api.openai.com/v1'
           }
         }
       }
 
+      // 其他配置 - 可以添加到相应部分
       if (config.botName) {
-        configEntries.push(`BOT_NAME=${config.botName}`)
+        newConfig.meta.botName = config.botName
       }
       if (config.botDescription) {
-        configEntries.push(`BOT_DESCRIPTION=${config.botDescription}`)
+        newConfig.meta.botDescription = config.botDescription
       }
       if (config.userName) {
-        configEntries.push(`USER_NAME=${config.userName}`)
+        newConfig.meta.userName = config.userName
       }
 
-      // 企微配置
-      if (config.wecomCorpId) {
-        configEntries.push(`WECOM_CORP_ID=${config.wecomCorpId}`)
-      }
-      if (config.wecomSecret) {
-        configEntries.push(`WECOM_SECRET=${config.wecomSecret}`)
-      }
-      if (config.wecomAgentId) {
-        configEntries.push(`WECOM_AGENT_ID=${config.wecomAgentId}`)
-      }
-      if (config.wecomToken) {
-        configEntries.push(`WECOM_TOKEN=${config.wecomToken}`)
-      }
-      if (config.wecomEncodingAesKey) {
-        configEntries.push(`WECOM_ENCODING_AES_KEY=${config.wecomEncodingAesKey}`)
-      }
-
-      // 其他配置
-      Object.entries(config).forEach(([key, value]) => {
-        if (value && !key.startsWith('llm') && !key.startsWith('wecom')) {
-          configEntries.push(`${key}=${value}`)
+      // 企微配置 - 可以添加到channels.wecom部分
+      if (config.wecomCorpId || config.wecomSecret || config.wecomAgentId) {
+        newConfig.channels.wecom = {}
+        if (config.wecomCorpId) {
+          newConfig.channels.wecom.corpId = config.wecomCorpId
         }
-      })
-
-      // 合并配置，保留原有未覆盖的配置
-      const existingLines = existingConfig.split('\n').filter(line => line.trim() && !line.startsWith('#'))
-      const existingKeys = new Set(existingLines.map(line => line.split('=')[0]))
-
-      configEntries.forEach(entry => {
-        const key = entry.split('=')[0]
-        existingKeys.delete(key)
-      })
-
-      // 保留原有未被覆盖的配置
-      existingLines.forEach(line => {
-        const key = line.split('=')[0]
-        if (existingKeys.has(key)) {
-          configEntries.push(line)
+        if (config.wecomSecret) {
+          newConfig.channels.wecom.secret = config.wecomSecret
         }
-      })
+        if (config.wecomAgentId) {
+          newConfig.channels.wecom.agentId = config.wecomAgentId
+        }
+        if (config.wecomToken) {
+          newConfig.channels.wecom.token = config.wecomToken
+        }
+        if (config.wecomEncodingAesKey) {
+          newConfig.channels.wecom.encodingAesKey = config.wecomEncodingAesKey
+        }
+      }
 
-      // 写入配置文件
-      const configContent = configEntries.join('\n') + '\n'
+      // 合并现有配置（如果存在），保留未覆盖的部分
+      if (existingConfig) {
+        // 合并配置，保留现有配置的其他部分
+        Object.keys(existingConfig).forEach(key => {
+          if (!newConfig[key] || key === 'meta') {
+            return
+          }
+          if (typeof existingConfig[key] === 'object' && existingConfig[key] !== null) {
+            newConfig[key] = {
+              ...existingConfig[key],
+              ...newConfig[key]
+            }
+          }
+        })
+      }
+
+      // 写入配置文件 - 使用标准JSON格式
+      const configContent = JSON.stringify(newConfig, null, 2)
       await fs.writeFile(configPath, configContent, 'utf8')
       log('配置文件写入成功')
+      log(`配置文件路径: ${configPath}`)
 
     } catch (error) {
       log(`写入配置文件失败: ${error.message}`)
