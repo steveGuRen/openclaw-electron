@@ -209,10 +209,6 @@ class OpenclawManager {
       throw new Error('Endpoint格式不正确')
     }
 
-    if (!config.botName || !security.validateInput(config.botName, /^[\u4e00-\u9fa5a-zA-Z0-9_\- ]+$/)) {
-      throw new Error('机器人名称格式不正确')
-    }
-
     log('配置验证通过')
   }
 
@@ -240,7 +236,7 @@ class OpenclawManager {
       // 构建新配置 - 符合官方JSON结构
       const newConfig = {
         meta: {
-          lastTouchedVersion: '0.1.0',
+          lastTouchedVersion: '2026.3.24',
           lastTouchedAt: new Date().toISOString()
         },
         gateway: {
@@ -248,7 +244,7 @@ class OpenclawManager {
           port: OPENCLAW_CONFIG.defaultPort,
           auth: {
             mode: 'token',
-            token: 'default-token' // 可以考虑生成随机token
+            token: '97766ea9244e93c30c728215b1f3f72892aeab5aedb0d14d'
           }
         },
         agents: {
@@ -260,7 +256,13 @@ class OpenclawManager {
           providers: {}
         },
         tools: {},
-        channels: {}
+        channels: {},
+        commands: {
+          native: 'auto',
+          nativeSkills: 'auto',
+          restart: true,
+          ownerDisplay: 'raw'
+        }
       }
 
       // 大模型配置 - 符合官方models.providers结构
@@ -271,19 +273,98 @@ class OpenclawManager {
             model: config.model || 'gpt-4',
             baseUrl: config.endpoint || 'https://api.openai.com/v1'
           }
+        } else if (config.llmProvider === 'volcengine') {
+          // 火山引擎配置格式
+          newConfig.models.providers['volcengine-plan'] = {
+            baseUrl: config.endpoint || 'https://ark.cn-beijing.volces.com/api/coding/v3',
+            apiKey: config.apiKey || '',
+            api: 'openai-completions',
+            models: [
+              {
+                id: 'ark-code-latest',
+                name: 'ark-code-latest',
+                input: ['text', 'image'],
+                contextWindow: 256000,
+                maxTokens: 32000
+              },
+              {
+                id: 'doubao-seed-code',
+                name: 'doubao-seed-code',
+                input: ['text', 'image'],
+                contextWindow: 256000,
+                maxTokens: 32000
+              },
+              {
+                id: 'glm-4.7',
+                name: 'glm-4.7',
+                input: ['text'],
+                contextWindow: 200000,
+                maxTokens: 128000
+              },
+              {
+                id: 'deepseek-v3.2',
+                name: 'deepseek-v3.2',
+                contextWindow: 128000,
+                maxTokens: 32000
+              },
+              {
+                id: 'doubao-seed-2.0-code',
+                name: 'doubao-seed-2.0-code',
+                input: ['text', 'image'],
+                contextWindow: 256000,
+                maxTokens: 128000
+              },
+              {
+                id: 'doubao-seed-2.0-pro',
+                name: 'doubao-seed-2.0-pro',
+                input: ['text', 'image'],
+                contextWindow: 256000,
+                maxTokens: 128000
+              },
+              {
+                id: 'doubao-seed-2.0-lite',
+                name: 'doubao-seed-2.0-lite',
+                input: ['text', 'image'],
+                contextWindow: 256000,
+                maxTokens: 128000
+              },
+              {
+                id: 'minimax-m2.5',
+                name: 'minimax-m2.5',
+                input: ['text'],
+                contextWindow: 200000,
+                maxTokens: 128000
+              },
+              {
+                id: 'kimi-k2.5',
+                name: 'kimi-k2.5',
+                input: ['text', 'image'],
+                contextWindow: 256000,
+                maxTokens: 32000
+              }
+            ]
+          }
+
+          // 设置默认模型
+          newConfig.agents.defaults = {
+            model: {
+              primary: `volcengine-plan/${config.model || 'doubao-seed-2.0-pro'}`
+            },
+            models: {
+              'volcengine-plan/ark-code-latest': {},
+              'volcengine-plan/doubao-seed-2.0-code': {},
+              'volcengine-plan/doubao-seed-2.0-pro': {},
+              'volcengine-plan/doubao-seed-2.0-lite': {},
+              'volcengine-plan/doubao-seed-code': {},
+              'volcengine-plan/minimax-m2.5': {},
+              'volcengine-plan/glm-4.7': {},
+              'volcengine-plan/deepseek-v3.2': {},
+              'volcengine-plan/kimi-k2.5': {}
+            }
+          }
         }
       }
 
-      // 其他配置 - 可以添加到相应部分
-      if (config.botName) {
-        newConfig.meta.botName = config.botName
-      }
-      if (config.botDescription) {
-        newConfig.meta.botDescription = config.botDescription
-      }
-      if (config.userName) {
-        newConfig.meta.userName = config.userName
-      }
 
       // 企微配置 - 可以添加到channels.wecom部分
       if (config.wecomCorpId || config.wecomSecret || config.wecomAgentId) {

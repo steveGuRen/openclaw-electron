@@ -15,58 +15,78 @@
           class="config-form"
         >
           <el-form-item label="大模型供应商" prop="llmProvider">
-            <el-select v-model="formData.llmProvider" placeholder="请选择大模型供应商" style="width: 100%;">
+            <el-select v-model="formData.llmProvider" placeholder="请选择大模型供应商" style="width: 100%;" @change="handleProviderChange">
               <el-option label="OpenAI" value="openai" />
+              <el-option label="火山引擎" value="volcengine" />
             </el-select>
           </el-form-item>
 
-          <el-form-item label="API Key" prop="apiKey">
-            <el-input
-              v-model="formData.apiKey"
-              type="password"
-              placeholder="请输入 OpenAI API Key，例如：sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-              show-password
-            />
-          </el-form-item>
 
-          <el-form-item label="机器人名称" prop="botName">
-            <el-input
-              v-model="formData.botName"
-              placeholder="请输入机器人显示名称"
-            />
-          </el-form-item>
+          <!-- OpenAI 配置 -->
+          <template v-if="formData.llmProvider === 'openai'">
+            <el-divider content-position="left">OpenAI 配置</el-divider>
 
-          <el-form-item label="机器人简介" prop="botDescription">
-            <el-input
-              v-model="formData.botDescription"
-              type="textarea"
-              :rows="3"
-              placeholder="请输入机器人功能描述"
-            />
-          </el-form-item>
+            <el-form-item label="API Key" prop="apiKey">
+              <el-input
+                v-model="formData.openai.apiKey"
+                type="password"
+                placeholder="请输入 OpenAI API Key，例如：sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                show-password
+              />
+            </el-form-item>
 
-          <el-form-item label="用户名称" prop="userName">
-            <el-input
-              v-model="formData.userName"
-              placeholder="请输入您的姓名或昵称"
-            />
-          </el-form-item>
+            <el-form-item label="API端点" prop="endpoint">
+              <el-input
+                v-model="formData.openai.endpoint"
+                placeholder="请输入 OpenAI API 端点，例如：https://api.openai.com/v1"
+              />
+              <div class="form-tip">默认使用 OpenAI 官方地址</div>
+            </el-form-item>
 
-          <el-form-item label="API端点" prop="endpoint">
-            <el-input
-              v-model="formData.endpoint"
-              placeholder="请输入 OpenAI API 端点，例如：https://api.openai.com/v1"
-            />
-            <div class="form-tip">默认使用 OpenAI 官方地址</div>
-          </el-form-item>
+            <el-form-item label="模型名称" prop="model">
+              <el-input
+                v-model="formData.openai.model"
+                placeholder="请输入模型名称，例如：gpt-4, gpt-3.5-turbo"
+              />
+              <div class="form-tip">常用模型：gpt-4, gpt-3.5-turbo</div>
+            </el-form-item>
+          </template>
 
-          <el-form-item label="模型名称" prop="model">
-            <el-input
-              v-model="formData.model"
-              placeholder="请输入模型名称，例如：gpt-4, gpt-3.5-turbo"
-            />
-            <div class="form-tip">常用模型：gpt-4, gpt-3.5-turbo</div>
-          </el-form-item>
+          <!-- 火山引擎配置 -->
+          <template v-if="formData.llmProvider === 'volcengine'">
+            <el-divider content-position="left">火山引擎配置</el-divider>
+
+            <el-form-item label="API Key" prop="apiKey">
+              <el-input
+                v-model="formData.volcengine.apiKey"
+                type="password"
+                placeholder="请输入火山引擎 API Key，例如：70a18a29-3f79-4241-96c1-b55eeb0ba115"
+                show-password
+              />
+            </el-form-item>
+
+            <el-form-item label="API端点" prop="endpoint">
+              <el-input
+                v-model="formData.volcengine.endpoint"
+                placeholder="请输入火山引擎 API 端点，例如：https://ark.cn-beijing.volces.com/api/coding/v3"
+              />
+              <div class="form-tip">默认使用火山引擎公共端点</div>
+            </el-form-item>
+
+            <el-form-item label="选择模型" prop="model">
+              <el-select v-model="formData.volcengine.model" placeholder="请选择模型" style="width: 100%;">
+                <el-option label="ark-code-latest" value="ark-code-latest" />
+                <el-option label="doubao-seed-code" value="doubao-seed-code" />
+                <el-option label="glm-4.7" value="glm-4.7" />
+                <el-option label="deepseek-v3.2" value="deepseek-v3.2" />
+                <el-option label="doubao-seed-2.0-code" value="doubao-seed-2.0-code" />
+                <el-option label="doubao-seed-2.0-pro" value="doubao-seed-2.0-pro" />
+                <el-option label="doubao-seed-2.0-lite" value="doubao-seed-2.0-lite" />
+                <el-option label="minimax-m2.5" value="minimax-m2.5" />
+                <el-option label="kimi-k2.5" value="kimi-k2.5" />
+              </el-select>
+            </el-form-item>
+          </template>
 
           <el-form-item class="form-actions">
             <el-button type="primary" size="large" @click="handleSubmit" :loading="loading">
@@ -96,33 +116,21 @@ const loading = ref(false)
 
 const formData = reactive({
   llmProvider: 'openai',
-  apiKey: '',
-  botName: 'AI 助手',
-  botDescription: '一个智能的 AI 助手，可以帮助您完成各种任务',
-  userName: '',
-  endpoint: 'https://api.openai.com/v1',
-  model: 'gpt-4'
+  openai: {
+    apiKey: '',
+    endpoint: 'https://api.openai.com/v1',
+    model: 'gpt-4'
+  },
+  volcengine: {
+    apiKey: '',
+    endpoint: 'https://ark.cn-beijing.volces.com/api/coding/v3',
+    model: 'doubao-seed-2.0-pro'
+  }
 })
 
 const rules = {
   llmProvider: [
     { required: true, message: '请选择大模型供应商', trigger: 'change' }
-  ],
-  apiKey: [
-    { required: true, message: '请输入API Key', trigger: 'blur' },
-    { min: 10, message: 'API Key 长度不能少于10位', trigger: 'blur' }
-  ],
-  botName: [
-    { required: true, message: '请输入机器人名称', trigger: 'blur' },
-    { min: 2, max: 20, message: '机器人名称长度在2到20个字符之间', trigger: 'blur' }
-  ],
-  botDescription: [
-    { required: true, message: '请输入机器人简介', trigger: 'blur' },
-    { min: 10, max: 200, message: '简介长度在10到200个字符之间', trigger: 'blur' }
-  ],
-  userName: [
-    { required: true, message: '请输入用户名称', trigger: 'blur' },
-    { min: 2, max: 20, message: '用户名称长度在2到20个字符之间', trigger: 'blur' }
   ]
 }
 
@@ -137,9 +145,17 @@ const handleSubmit = async () => {
         // 保存配置到Pinia
         appStore.updateInstallConfig(formData)
 
+        // 构建要传递给主进程的配置
+        const configToSave = {
+          llmProvider: formData.llmProvider,
+          // 根据选择的供应商传递对应的配置
+          ...(formData.llmProvider === 'openai' ? formData.openai : {}),
+          ...(formData.llmProvider === 'volcengine' ? formData.volcengine : {})
+        }
+
         // 调用主进程保存配置文件
         if (window.electronAPI) {
-          const result = await window.electronAPI.saveOpenclawConfig({ ...formData })
+          const result = await window.electronAPI.saveOpenclawConfig(configToSave)
           if (!result.success) {
             ElMessage.warning('配置保存到文件失败: ' + result.error)
           }
@@ -160,6 +176,11 @@ const handleSubmit = async () => {
       return false
     }
   })
+}
+
+// 供应商切换事件处理
+const handleProviderChange = (provider) => {
+  console.log('切换模型供应商:', provider)
 }
 
 const handleCancel = () => {
